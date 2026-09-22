@@ -9,7 +9,7 @@ const CONFIG = {
   //   → Fine-grained tokens → Repository access: chỉ chọn "hoi-ong/ManagementSkill"
   //   → Permissions → Contents: Read and write
   // ⚠️ Repo public: token dán vào đây sẽ bị lộ. Nên dùng token của tài khoản GitHub phụ.
-  token: "",
+  token: " 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",
 
   quizTitle: "TRẮC NGHIỆM KỸ NĂNG QUẢN LÝ",
   quizSubtitle: "Bài kiểm tra cuối khóa • 50 câu • 7 nhóm kỹ năng",
