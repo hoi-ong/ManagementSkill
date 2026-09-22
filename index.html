@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trắc nghiệm Kỹ năng Quản lý</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--card:#fff;--ink:#0f172a;--muted:#64748b;--brand:#1d4ed8;--brand-soft:#e0e7ff;--ok:#16a34a;--bad:#dc2626;--line:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  background:linear-gradient(160deg,#0f172a,#1e3a8a 60%,#312e81);color:var(--ink);
+  min-height:100vh;padding:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto}
+.card{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.25);margin-bottom:16px}
+h1{font-size:clamp(20px,4.5vw,30px);margin:0 0 6px}
+h2{font-size:clamp(17px,3.6vw,22px);margin:0 0 10px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+input[type=text],input[type=email]{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#f8fafc}
+input:focus{outline:2px solid var(--brand);background:#fff}
+.btn{appearance:none;border:0;border-radius:10px;padding:13px 20px;font-size:16px;font-weight:700;background:var(--brand);color:#fff;cursor:pointer;width:100%;margin-top:18px}
+.btn.secondary{background:#e2e8f0;color:#0f172a;margin-top:10px}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.err{color:var(--bad);font-size:13px;margin-top:8px;display:none}
+.topbar{position:sticky;top:0;z-index:5;background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.meta{font-size:13px;color:var(--muted)}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;flex:1 1 180px;min-width:140px}
+.bar>span{display:block;height:100%;background:var(--brand);width:0;transition:width .3s}
+.q{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;background:#fff}
+.q.unanswered{border-color:#fbbf24;background:#fffbeb}
+.qhead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--brand-soft);color:var(--brand)}
+.badge.lv-hard{background:#fee2e2;color:#b91c1c}
+.badge.lv-medium{background:#fef3c7;color:#b45309}
+.qtext{font-weight:600;margin-bottom:12px;font-size:16px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:15px;background:#f8fafc}
+.opt:hover{border-color:var(--brand)}
+.opt input{margin-top:3px;flex:0 0 auto;width:18px;height:18px;accent-color:var(--brand)}
+.opt.sel{border-color:var(--brand);background:var(--brand-soft)}
+.opt.correct{border-color:var(--ok);background:#dcfce7}
+.opt.wrong{border-color:var(--bad);background:#fee2e2}
+.exp{font-size:14px;background:#f1f5f9;border-left:4px solid var(--brand);padding:10px 12px;border-radius:8px;margin-top:8px}
+.score{font-size:clamp(40px,12vw,64px);font-weight:800;color:var(--brand);line-height:1}
+.center{text-align:center}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left}
+th{color:var(--muted);font-weight:600;font-size:13px}
+.status{font-size:14px;padding:11px 13px;border-radius:10px;margin-top:14px}
+.status.ok{background:#dcfce7;color:#166534}
+.status.warn{background:#fef3c7;color:#92400e}
+.status.err{background:#fee2e2;color:#991b1b}
+.hidden{display:none}
+@media(max-width:520px){.card{padding:18px}.opt{font-size:14.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="screen-info" class="card">
+    <h1 id="title">TRẮC NGHIỆM KỸ NĂNG QUẢN LÝ</h1>
+    <p class="sub" id="subtitle">Bài kiểm tra cuối khóa</p>
+    <form id="infoForm" novalidate>
+      <label for="name">Họ và tên <span style="color:#dc2626">*</span></label>
+      <input id="name" type="text" autocomplete="name" placeholder="Nguyễn Văn A" required>
+      <label for="clazz">Lớp / Đơn vị <span style="color:#dc2626">*</span></label>
+      <input id="clazz" type="text" autocomplete="organization" placeholder="Lớp QL-01" required>
+      <label for="email">Email <span class="meta" id="emailOpt">(nếu có)</span></label>
+      <input id="email" type="email" autocomplete="email" placeholder="ten@email.com">
+      <div class="err" id="infoErr"></div>
+      <button class="btn" type="submit">Bắt đầu làm bài</button>
+      <p class="hint" id="rules"></p>
+    </form>
+  </section>
+
+  <section id="screen-quiz" class="hidden">
+    <div class="topbar">
+      <div><strong id="whoami"></strong><div class="meta" id="progressText">0/50 câu</div></div>
+      <div class="bar"><span id="progressBar"></span></div>
+      <div class="meta" id="timer"></div>
+    </div>
+    <div class="card"><div id="questions"></div>
+      <button class="btn" id="submitBtn" type="button">Nộp bài</button>
+      <div class="err" id="quizErr"></div>
+    </div>
+  </section>
+
+  <section id="screen-result" class="hidden">
+    <div class="card center">
+      <h2>Kết quả bài làm</h2>
+      <div class="score"><span id="scoreNum">0</span><span style="font-size:24px;color:#64748b">/50</span></div>
+      <p class="sub" id="resultLine"></p>
+      <div id="saveStatus" class="status warn">Đang lưu kết quả…</div>
+      <button class="btn secondary" id="downloadBtn" type="button">Tải kết quả của tôi (.xlsx)</button>
+      <button class="btn secondary" id="retryBtn" type="button">Làm lại bài</button>
+    </div>
+    <div class="card">
+      <h2>Kết quả theo nhóm kỹ năng</h2>
+      <table><thead><tr><th>Nhóm kỹ năng</th><th>Đúng</th><th>Tỷ lệ</th></tr></thead><tbody id="breakdown"></tbody></table>
+    </div>
+    <div class="card" id="reviewCard">
+      <h2>Đáp án và giải thích</h2>
+      <div id="review"></div>
+    </div>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="questions.js"></script>
+<script>
+(function(){
+  "use strict";
+  const LEVELS = {easy:"Dễ", medium:"Trung bình", hard:"Trung bình khó"};
+  const LETTERS = ["A","B","C","D"];
+  const $ = function(id){ return document.getElementById(id); };
+  const total = QUESTIONS.length;
+  let student = null, answers = new Array(total).fill(null), startedAt = null, timerId = null, result = null;
+
+  $("title").textContent = CONFIG.quizTitle;
+  $("subtitle").textContent = CONFIG.quizSubtitle;
+  $("rules").textContent = "Bài gồm " + total + " câu, mỗi câu đúng 1 điểm. "
+    + (CONFIG.timeLimitMinutes > 0 ? "Thời gian làm bài " + CONFIG.timeLimitMinutes + " phút. " : "Không giới hạn thời gian. ")
+    + "Điểm đạt: " + CONFIG.passScore + "/" + total + ".";
+  if (CONFIG.requireEmail) { $("emailOpt").textContent = "(bắt buộc)"; $("email").required = true; }
+
+  $("infoForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    const name = $("name").value.trim(), clazz = $("clazz").value.trim(), email = $("email").value.trim();
+    const err = $("infoErr"); err.style.display = "none";
+    if (!name || !clazz) { err.textContent = "Vui lòng nhập họ tên và lớp."; err.style.display = "block"; return; }
+    if ((CONFIG.requireEmail && !email) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+      err.textContent = "Email chưa hợp lệ."; err.style.display = "block"; return;
+    }
+    student = {name:name, clazz:clazz, email:email};
+    startQuiz();
+  });
+
+  function startQuiz(){
+    $("screen-info").classList.add("hidden");
+    $("screen-quiz").classList.remove("hidden");
+    $("whoami").textContent = student.name + " • " + student.clazz;
+    renderQuestions(); updateProgress();
+    startedAt = new Date();
+    if (CONFIG.timeLimitMinutes > 0) startTimer();
+    window.scrollTo(0,0);
+  }
+
+  function renderQuestions(){
+    const box = $("questions"); box.innerHTML = "";
+    QUESTIONS.forEach(function(q, i){
+      const el = document.createElement("div");
+      el.className = "q"; el.id = "q" + i;
+      const opts = q.o.map(function(text, j){
+        return '<label class="opt" data-q="'+i+'" data-o="'+j+'">'
+             + '<input type="radio" name="q'+i+'" value="'+j+'">'
+             + '<span><b>'+LETTERS[j]+'.</b> '+esc(text)+'</span></label>';
+      }).join("");
+      el.innerHTML = '<div class="qhead"><span class="badge">Câu '+(i+1)+'/'+total+'</span>'
+        + '<span class="badge">'+esc(q.g)+'</span>'
+        + '<span class="badge lv-'+q.level+'">'+LEVELS[q.level]+'</span></div>'
+        + '<div class="qtext">'+esc(q.q)+'</div>' + opts;
+      box.appendChild(el);
+    });
+    box.addEventListener("change", function(ev){
+      const lab = ev.target.closest(".opt"); if (!lab) return;
+      const qi = +lab.dataset.q;
+      answers[qi] = +lab.dataset.o;
+      const card = $("q"+qi);
+      card.classList.remove("unanswered");
+      card.querySelectorAll(".opt").forEach(function(o){ o.classList.remove("sel"); });
+      lab.classList.add("sel");
+      updateProgress();
+    });
+  }
+
+  function updateProgress(){
+    const done = answers.filter(function(a){ return a !== null; }).length;
+    $("progressText").textContent = done + "/" + total + " câu đã trả lời";
+    $("progressBar").style.width = (done/total*100) + "%";
+  }
+
+  function startTimer(){
+    let left = CONFIG.timeLimitMinutes * 60;
+    timerId = setInterval(function(){
+      left--;
+      const m = String(Math.floor(left/60)).padStart(2,"0"), s = String(left%60).padStart(2,"0");
+      $("timer").textContent = "⏱ " + m + ":" + s;
+      if (left <= 0){ clearInterval(timerId); finish(true); }
+    }, 1000);
+  }
+
+  $("submitBtn").addEventListener("click", function(){ finish(false); });
+
+  function finish(auto){
+    const missing = [];
+    answers.forEach(function(a,i){ if (a === null) missing.push(i); });
+    if (!auto && missing.length){
+      missing.forEach(function(i){ $("q"+i).classList.add("unanswered"); });
+      const e = $("quizErr");
+      e.textContent = "Bạn còn " + missing.length + " câu chưa trả lời (đã đánh dấu màu vàng).";
+      e.style.display = "block";
+      $("q"+missing[0]).scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+    if (timerId) clearInterval(timerId);
+    showResult();
+  }
+
+  function showResult(){
+    let score = 0; const byGroup = {};
+    QUESTIONS.forEach(function(q,i){
+      const ok = answers[i] === q.a;
+      if (ok) score++;
+      if (!byGroup[q.g]) byGroup[q.g] = {ok:0, n:0};
+      byGroup[q.g].n++; if (ok) byGroup[q.g].ok++;
+    });
+    const minutes = Math.max(1, Math.round((Date.now() - startedAt.getTime())/60000));
+    result = {score:score, total:total, minutes:minutes, at:new Date()};
+
+    $("screen-quiz").classList.add("hidden");
+    $("screen-result").classList.remove("hidden");
+    $("scoreNum").textContent = score;
+    const pct = Math.round(score/total*100);
+    $("resultLine").textContent = student.name + " • " + student.clazz + " • "
+      + pct + "% • " + (score >= CONFIG.passScore ? "ĐẠT ✅" : "CHƯA ĐẠT — nên ôn lại ❗");
+
+    $("breakdown").innerHTML = Object.keys(byGroup).map(function(g){
+      const b = byGroup[g];
+      return "<tr><td>"+esc(g)+"</td><td>"+b.ok+"/"+b.n+"</td><td>"+Math.round(b.ok/b.n*100)+"%</td></tr>";
+    }).join("");
+
+    if (CONFIG.showReview) renderReview(); else $("reviewCard").classList.add("hidden");
+    window.scrollTo(0,0);
+    saveToGithub();
+  }
+
+  function renderReview(){
+    $("review").innerHTML = QUESTIONS.map(function(q,i){
+      const opts = q.o.map(function(t,j){
+        let cls = "opt";
+        if (j === q.a) cls += " correct";
+        else if (j === answers[i]) cls += " wrong";
+        return '<div class="'+cls+'"><span><b>'+LETTERS[j]+'.</b> '+esc(t)+'</span></div>';
+      }).join("");
+      return '<div class="q"><div class="qhead"><span class="badge">Câu '+(i+1)+'</span>'
+        + '<span class="badge">'+esc(q.g)+'</span>'
+        + '<span class="badge lv-'+q.level+'">'+(answers[i]===q.a ? "Đúng" : "Sai")+'</span></div>'
+        + '<div class="qtext">'+esc(q.q)+'</div>'+opts
+        + '<div class="exp"><b>Giải thích:</b> '+esc(q.e)+'</div></div>';
+    }).join("");
+  }
+
+  $("retryBtn").addEventListener("click", function(){
+    answers = new Array(total).fill(null); result = null;
+    $("quizErr").style.display = "none";
+    $("screen-result").classList.add("hidden");
+    startQuiz();
+  });
+
+  const HEADER = ["Thời gian nộp","Họ tên","Lớp","Email","Lần làm","Điểm","Tổng câu","Tỷ lệ %","Kết quả","Số phút làm bài"];
+
+  function rowOf(attempt){
+    return [fmtTime(result.at), student.name, student.clazz, student.email || "", attempt,
+            result.score, result.total, Math.round(result.score/result.total*100),
+            result.score >= CONFIG.passScore ? "Đạt" : "Chưa đạt", result.minutes];
+  }
+
+  function status(kind, html){ const el = $("saveStatus"); el.className = "status " + kind; el.innerHTML = html; }
+
+  async function saveToGithub(){
+    if (!CONFIG.token){
+      status("warn", "⚠️ Chưa bật lưu tự động. Vui lòng bấm nút bên dưới để tải file kết quả và gửi cho giáo viên.");
+      return;
+    }
+    status("warn", "Đang lưu kết quả lên hệ thống…");
+    try {
+      const saved = await commitWithRetry();
+      status("ok", "✅ Đã lưu kết quả thành công — đây là <b>lần làm thứ " + saved + "</b> của bạn.");
+    } catch (e){
+      status("err", "❌ Không lưu được lên hệ thống (" + esc(String(e.message || e)) + "). Vui lòng tải file kết quả bên dưới và gửi cho giáo viên.");
+    }
+  }
+
+  async function commitWithRetry(){
+    for (let t = 0; t < 3; t++){
+      try { return await commitOnce(); }
+      catch (e){
+        if (t === 2 || !/409|conflict|sha/i.test(String(e.message))) throw e;
+        await new Promise(function(r){ setTimeout(r, 600 + Math.random()*900); });
+      }
+    }
+  }
+
+  const api = function(p){ return "https://api.github.com/repos/" + CONFIG.owner + "/" + CONFIG.repo + "/contents/" + p; };
+  const headers = function(){ return {Authorization:"Bearer " + CONFIG.token, Accept:"application/vnd.github+json"}; };
+
+  async function commitOnce(){
+    let sha = null, rows = [HEADER];
+    const res = await fetch(api(CONFIG.path) + "?ref=" + encodeURIComponent(CONFIG.branch) + "&t=" + Date.now(), {headers: headers()});
+    if (res.status === 200){
+      const j = await res.json();
+      sha = j.sha;
+      const bytes = b64ToBytes(j.content.replace(/\n/g, ""));
+      const wb = XLSX.read(bytes, {type:"array"});
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:false});
+      if (!rows.length) rows = [HEADER];
+    } else if (res.status !== 404){
+      throw new Error("HTTP " + res.status);
+    }
+    const key = (student.email || student.name + "|" + student.clazz).toLowerCase();
+    let attempt = 1;
+    rows.slice(1).forEach(function(r){
+      const k = ((r[3] || "") ? String(r[3]) : String(r[1] || "") + "|" + String(r[2] || "")).toLowerCase();
+      if (k === key) attempt++;
+    });
+    rows.push(rowOf(attempt));
+    const wb2 = XLSX.utils.book_new();
+    const ws2 = XLSX.utils.aoa_to_sheet(rows);
+    ws2["!cols"] = [{wch:19},{wch:24},{wch:16},{wch:26},{wch:9},{wch:7},{wch:9},{wch:9},{wch:11},{wch:14}];
+    XLSX.utils.book_append_sheet(wb2, ws2, "KetQua");
+    const out = XLSX.write(wb2, {bookType:"xlsx", type:"array"});
+    const body = {
+      message: "Ket qua: " + student.name + " (" + student.clazz + ") - " + result.score + "/" + result.total + " - lan " + attempt,
+      content: bytesToB64(new Uint8Array(out)),
+      branch: CONFIG.branch
+    };
+    if (sha) body.sha = sha;
+    const put = await fetch(api(CONFIG.path), {method:"PUT", headers: Object.assign({"Content-Type":"application/json"}, headers()), body: JSON.stringify(body)});
+    if (!put.ok) throw new Error("HTTP " + put.status + (put.status === 409 ? " conflict" : ""));
+    return attempt;
+  }
+
+  $("downloadBtn").addEventListener("click", function(){
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([HEADER, rowOf(1)]);
+    XLSX.utils.book_append_sheet(wb, ws, "KetQua");
+    XLSX.writeFile(wb, "ketqua_" + slug(student.name) + "_" + result.score + "diem.xlsx");
+  });
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]; }); }
+  function slug(s){ return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").replace(/[^a-zA-Z0-9]+/g,"_"); }
+  function fmtTime(d){
+    const p = function(n){ return String(n).padStart(2,"0"); };
+    return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes());
+  }
+  function b64ToBytes(b64){ const bin = atob(b64); const a = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
+  function bytesToB64(bytes){ let s=""; for (let i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]); return btoa(s); }
+
+  window.addEventListener("beforeunload", function(e){
+    if (startedAt && !result){ e.preventDefault(); e.returnValue = ""; }
+  });
+})();
+</script>
+</body>
+</html>
