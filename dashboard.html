@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bảng điểm lớp — Kỹ năng Quản lý</title>
+<title>Bảng điểm lớp — Trắc nghiệm Kỹ năng Quản lý</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--card:#fff;--ink:#0f172a;--muted:#64748b;--brand:#1d4ed8;--ok:#16a34a;--bad:#dc2626;--line:#e2e8f0}
@@ -13,10 +13,11 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-s
 .wrap{max-width:1150px;margin:0 auto}
 .card{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.25);margin-bottom:16px}
 h1{font-size:clamp(19px,4vw,27px);margin:0 0 4px}
+h2{font-size:clamp(16px,3vw,20px);margin:0 0 12px}
 .sub{color:var(--muted);font-size:14px;margin:0 0 16px}
 label{display:block;font-weight:600;font-size:13px;margin:12px 0 6px}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;background:#f8fafc}
-.btn{border:0;border-radius:9px;padding:11px 18px;font-size:15px;font-weight:700;background:var(--brand);color:#fff;cursor:pointer}
+.btn{border:0;border-radius:9px;padding:11px 18px;font-size:15px;font-weight:700;background:var(--brand);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
 .btn.sec{background:#e2e8f0;color:#0f172a}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .row>div{flex:1 1 180px}
@@ -25,7 +26,7 @@ input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-ra
 .stat b{display:block;font-size:clamp(20px,4vw,28px);color:var(--brand);line-height:1.2}
 .stat span{font-size:12px;color:var(--muted)}
 .tablebox{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
 th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;white-space:nowrap}
 th{font-size:12px;color:var(--muted);cursor:pointer;user-select:none;position:sticky;top:0;background:#fff}
 th:hover{color:var(--brand)}
@@ -46,12 +47,13 @@ tbody tr:hover{background:#f8fafc}
 <div class="wrap">
 
   <div class="card">
-    <h1>Bảng điểm lớp — Trắc nghiệm Kỹ năng Quản lý</h1>
+    <h1>Bảng điểm lớp</h1>
     <p class="sub" id="src"></p>
     <div class="row">
       <div><button class="btn" id="loadBtn" type="button">Tải bảng điểm</button></div>
       <div><button class="btn sec" id="csvBtn" type="button">Xuất CSV</button></div>
       <div><button class="btn sec" id="xlsxBtn" type="button">Tải file Excel gốc</button></div>
+      <div><a class="btn sec" href="index.html">← Link bài test</a></div>
     </div>
     <div id="tokenBox" class="hidden">
       <label for="token">Repo ở chế độ riêng tư — dán token GitHub (chỉ lưu tạm trong trình duyệt)</label>
@@ -65,7 +67,14 @@ tbody tr:hover{background:#f8fafc}
       <div class="stats" id="stats"></div>
       <div class="row">
         <div><label for="q">Tìm theo tên / email</label><input id="q" type="text" placeholder="Nhập tên…"></div>
-        <div><label for="cls">Lớp</label><select id="cls"><option value="">Tất cả</option></select></div>
+        <div><label for="cls">Lớp</label><select id="cls"><option value="">Tất cả lớp</option></select></div>
+        <div><label for="test">Bài test</label>
+          <select id="test">
+            <option value="">Tất cả</option>
+            <option value="30">Bản 30 câu</option>
+            <option value="50">Bản 50 câu</option>
+          </select>
+        </div>
         <div><label for="view">Hiển thị</label>
           <select id="view">
             <option value="best">Điểm cao nhất mỗi học viên</option>
@@ -74,7 +83,7 @@ tbody tr:hover{background:#f8fafc}
           </select>
         </div>
       </div>
-      <p class="hint">Bấm vào tiêu đề cột để sắp xếp. Hàng màu đỏ là chưa đạt.</p>
+      <p class="hint">Đang sắp xếp theo <b>Lớp</b>. Bấm tiêu đề cột bất kỳ để đổi cách sắp xếp, bấm lần nữa để đảo chiều. Hàng nền đỏ là chưa đạt.</p>
     </div>
 
     <div class="card tablebox">
@@ -83,6 +92,16 @@ tbody tr:hover{background:#f8fafc}
         <tbody id="tbody"></tbody>
       </table>
       <p class="hint" id="count"></p>
+    </div>
+
+    <div class="card">
+      <h2>Tổng hợp theo lớp</h2>
+      <div class="tablebox">
+        <table style="min-width:560px">
+          <thead><tr><th>Lớp</th><th>Số học viên</th><th>Điểm TB (%)</th><th>Đạt</th><th>Tỷ lệ đạt</th></tr></thead>
+          <tbody id="byclass"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -93,7 +112,8 @@ tbody tr:hover{background:#f8fafc}
   "use strict";
   const $ = function(id){ return document.getElementById(id); };
   const COLS = ["Thời gian nộp","Họ tên","Lớp","Email","Lần làm","Điểm","Tổng câu","Tỷ lệ %","Kết quả","Số phút làm bài"];
-  let rows = [], sortCol = 5, sortDir = -1;
+  const FIELDS = ["time","name","clazz","email","attempt","score","total","pct","res","mins"];
+  let rows = [], sortCol = 2, sortDir = 1;   // mặc định: sắp xếp theo Lớp
 
   $("src").textContent = "Nguồn: " + CONFIG.owner + "/" + CONFIG.repo + " • " + CONFIG.path;
 
@@ -151,48 +171,57 @@ tbody tr:hover{background:#f8fafc}
 
   function fillClasses(){
     const set = {}; rows.forEach(function(r){ if (r.clazz) set[r.clazz] = 1; });
-    $("cls").innerHTML = '<option value="">Tất cả</option>'
-      + Object.keys(set).sort().map(function(c){ return '<option>'+esc(c)+'</option>'; }).join("");
+    $("cls").innerHTML = '<option value="">Tất cả lớp</option>'
+      + Object.keys(set).sort(function(a,b){ return a.localeCompare(b,"vi"); })
+          .map(function(c){ return '<option>'+esc(c)+'</option>'; }).join("");
   }
 
   function keyOf(r){ return (r.email || r.name + "|" + r.clazz).toLowerCase(); }
+  function passOf(r){ return Math.ceil(r.total * 0.6); }
 
   function filtered(){
-    const q = $("q").value.trim().toLowerCase(), cls = $("cls").value, view = $("view").value;
+    const q = $("q").value.trim().toLowerCase(), cls = $("cls").value,
+          view = $("view").value, test = $("test").value;
     let list = rows.filter(function(r){
       return (!cls || r.clazz === cls)
+        && (!test || String(r.total) === test)
         && (!q || (r.name + " " + r.email).toLowerCase().indexOf(q) >= 0);
     });
     if (view !== "all"){
       const pick = {};
       list.forEach(function(r){
-        const k = keyOf(r), cur = pick[k];
+        const k = keyOf(r) + "|" + r.total, cur = pick[k];
         if (!cur) { pick[k] = r; return; }
         if (view === "best" ? r.score > cur.score : r.attempt > cur.attempt) pick[k] = r;
       });
       list = Object.keys(pick).map(function(k){ return pick[k]; });
     }
-    const f = ["time","name","clazz","email","attempt","score","total","pct","res","mins"][sortCol];
+    const f = FIELDS[sortCol];
     list.sort(function(a,b){
       const x = a[f], y = b[f];
-      if (typeof x === "number" && typeof y === "number") return (x - y) * sortDir;
-      return String(x).localeCompare(String(y), "vi") * sortDir;
+      let c;
+      if (typeof x === "number" && typeof y === "number") c = x - y;
+      else c = String(x).localeCompare(String(y), "vi");
+      if (c !== 0) return c * sortDir;
+      return (a.clazz + a.name).localeCompare(b.clazz + b.name, "vi");
     });
     return list;
   }
 
   function render(){
     const list = filtered();
-    const pass = list.filter(function(r){ return r.score >= CONFIG.passScore; }).length;
-    const avg = list.length ? (list.reduce(function(s,r){ return s + r.score; }, 0) / list.length) : 0;
-    const max = list.length ? Math.max.apply(null, list.map(function(r){ return r.score; })) : 0;
+    const pass = list.filter(function(r){ return r.score >= passOf(r); }).length;
+    const avgPct = list.length ? (list.reduce(function(s,r){ return s + r.pct; }, 0) / list.length) : 0;
+    const maxPct = list.length ? Math.max.apply(null, list.map(function(r){ return r.pct; })) : 0;
+    const classes = {}; list.forEach(function(r){ if (r.clazz) classes[r.clazz] = 1; });
+
     $("stats").innerHTML =
-        stat(list.length, "Học viên / lượt hiển thị")
-      + stat(avg.toFixed(1), "Điểm trung bình")
-      + stat(pass + "/" + list.length, "Đạt (≥ " + CONFIG.passScore + ")")
+        stat(list.length, "Dòng đang hiển thị")
+      + stat(Object.keys(classes).length, "Số lớp")
+      + stat(avgPct.toFixed(1) + "%", "Tỷ lệ đúng trung bình")
+      + stat(pass + "/" + list.length, "Đạt (≥ 60%)")
       + stat(list.length ? Math.round(pass/list.length*100) + "%" : "0%", "Tỷ lệ đạt")
-      + stat(max, "Điểm cao nhất")
-      + stat(rows.length, "Tổng lượt làm bài");
+      + stat(maxPct + "%", "Kết quả cao nhất");
 
     $("thead").innerHTML = COLS.map(function(c,i){
       return "<th data-i='"+i+"'>" + c + (i === sortCol ? (sortDir > 0 ? " ▲" : " ▼") : "") + "</th>";
@@ -206,21 +235,34 @@ tbody tr:hover{background:#f8fafc}
     });
 
     $("tbody").innerHTML = list.map(function(r){
-      const ok = r.score >= CONFIG.passScore;
+      const ok = r.score >= passOf(r);
       return "<tr" + (ok ? "" : ' style="background:#fff5f5"') + ">"
-        + td(r.time) + td(r.name) + td(r.clazz) + td(r.email)
+        + td(r.time) + td(r.name) + "<td><b>" + esc(r.clazz) + "</b></td>" + td(r.email)
         + td("Lần " + r.attempt) + "<td><b>" + r.score + "</b></td>" + td(r.total) + td(r.pct + "%")
         + '<td><span class="pill ' + (ok ? "pass" : "fail") + '">' + (ok ? "Đạt" : "Chưa đạt") + "</span></td>"
         + td(r.mins + " phút") + "</tr>";
     }).join("");
     $("count").textContent = "Hiển thị " + list.length + " dòng / tổng " + rows.length + " lượt làm bài.";
+
+    const g = {};
+    list.forEach(function(r){
+      const c = r.clazz || "(chưa ghi lớp)";
+      if (!g[c]) g[c] = {n:0, sum:0, ok:0};
+      g[c].n++; g[c].sum += r.pct; if (r.score >= passOf(r)) g[c].ok++;
+    });
+    $("byclass").innerHTML = Object.keys(g).sort(function(a,b){ return a.localeCompare(b,"vi"); })
+      .map(function(c){
+        const b = g[c];
+        return "<tr><td><b>"+esc(c)+"</b></td><td>"+b.n+"</td><td>"+(b.sum/b.n).toFixed(1)+"%</td><td>"
+          + b.ok+"/"+b.n+"</td><td>"+Math.round(b.ok/b.n*100)+"%</td></tr>";
+      }).join("");
   }
 
   function stat(v, l){ return '<div class="stat"><b>'+esc(String(v))+'</b><span>'+esc(l)+'</span></div>'; }
   function td(v){ return "<td>" + esc(String(v)) + "</td>"; }
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]; }); }
 
-  ["q","cls","view"].forEach(function(id){
+  ["q","cls","view","test"].forEach(function(id){
     $(id).addEventListener("input", function(){ if (rows.length) render(); });
   });
 
