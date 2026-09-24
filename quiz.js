@@ -234,7 +234,26 @@
     throw lastError;
   }
 
-  async function postOnce(payload) {
+async function postOnce(payload) {
+
+  const url =
+    CONFIG.apiUrl +
+    "?action=submit&data=" +
+    encodeURIComponent(JSON.stringify(payload));
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  const data = await response.json();
+
+  if (data.success === false) {
+    throw new Error(data.message || "Lỗi lưu dữ liệu");
+  }
+
+  return data;
+}
     
 
   function status(kind, message) { const el = $("saveStatus"); el.className = "status " + kind; el.textContent = message; }
