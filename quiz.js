@@ -235,47 +235,7 @@
   }
 
   async function postOnce(payload) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), Number(CONFIG.apiTimeoutMs || 15000));
-    try {
-      const response = await fetch(CONFIG.apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(payload), signal: controller.signal, cache: "no-store", credentials: "omit"
-      });
-      const bodyText = await response.text();
-      let data = {};
-      if (bodyText) {
-        try { data = JSON.parse(bodyText); } catch (_) { data = { message: bodyText }; }
-      }
-      if (!response.ok || data.success === false) {
-        const error = new Error(data.message || data.error || ("HTTP " + response.status));
-        error.retryable = response.status === 408 || response.status === 429 || response.status >= 500;
-        throw error;
-      }
-      return data;
-    } catch (error) {
-      if (error.name === "AbortError") {
-        const timeoutError = new Error("API phản hồi quá thời gian");
-        timeoutError.retryable = true;
-        throw timeoutError;
-      }
-      if (typeof error.retryable === "undefined") error.retryable = true;
-      throw error;
-    } finally { clearTimeout(timeoutId); }
-  }
-
-  const HEADER = ["Thời gian nộp", "Họ tên", "Lớp", "Email", "Lần làm", "Điểm", "Tổng câu", "Tỷ lệ %", "Kết quả", "Số phút làm bài"];
-  function resultRow() {
-    return [fmtTime(new Date(result.submittedAt)), student.name, student.clazz, student.email || "", 1,
-      result.score, result.total, result.percentage, result.passed ? "Đạt" : "Chưa đạt", result.minutes];
-  }
-  $("downloadBtn").addEventListener("click", function () {
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet([HEADER, resultRow()]);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "KetQua");
-    XLSX.writeFile(workbook, "ketqua_" + slug(student.name) + "_" + result.score + "diem.xlsx");
-  });
+    
 
   function status(kind, message) { const el = $("saveStatus"); el.className = "status " + kind; el.textContent = message; }
   function createSubmissionId() { return (window.crypto && typeof window.crypto.randomUUID === "function") ? window.crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2); }
