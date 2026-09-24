@@ -236,25 +236,91 @@
 
 async function postOnce(payload) {
 
-  const url =
-    CONFIG.apiUrl +
-    "?action=submit&data=" +
-    encodeURIComponent(JSON.stringify(payload));
+  const controller = new AbortController();
 
-  const response = await fetch(url, {
-    method: "GET",
-    cache: "no-store"
-  });
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    Number(CONFIG.apiTimeoutMs || 15000)
+  );
 
-  const data = await response.json();
+  try {
 
-  if (data.success === false) {
-    throw new Error(data.message || "Lỗi lưu dữ liệu");
+    const url =
+      CONFIG.apiUrl +
+      "?action=submit&data=" +
+      encodeURIComponent(
+        JSON.stringify(payload)
+      );
+
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal
+    });
+
+    const bodyText =
+      await response.text();
+
+    let data = {};
+
+    if (bodyText) {
+
+      try {
+
+        data = JSON.parse(bodyText);
+
+      } catch (_) {
+
+        data = {
+          success: false,
+          message:
+            "API trả về dữ liệu không hợp lệ"
+        };
+      }
+    }
+
+    if (!response.ok || data.success === false) {
+
+      const error = new Error(
+        data.message ||
+        ("HTTP " + response.status)
+      );
+
+      error.retryable = false;
+
+      throw error;
+    }
+
+    return data;
+
+  } catch (error) {
+
+    if (error.name === "AbortError") {
+
+      const timeoutError =
+        new Error(
+          "API phản hồi quá thời gian"
+        );
+
+      timeoutError.retryable = true;
+
+      throw timeoutError;
+    }
+
+    if (
+      typeof error.retryable ===
+      "undefined"
+    ) {
+      error.retryable = false;
+    }
+
+    throw error;
+
+  } finally {
+
+    clearTimeout(timeoutId);
   }
-
-  return data;
-}
-    
+}    
 
   function status(kind, message) { const el = $("saveStatus"); el.className = "status " + kind; el.textContent = message; }
   function createSubmissionId() { return (window.crypto && typeof window.crypto.randomUUID === "function") ? window.crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2); }
